@@ -46,8 +46,8 @@ prepare
    
 export
 %%% Finite domains
-   %inf:            FdInf
-   %sup:            FdSup
+   inf:             FdInf
+   sup:             FdSup
    is:              FdIs
    isIn:            FdIsIn
    value:           FdValue
@@ -138,6 +138,8 @@ define
    FdIs = FDB.is
    FdIsIn = FDB.isIn
    FdValue = FDB.value
+   FdInf = FDB.inf
+   FdSup = FDB.sup
 
    %local
    %   GetDomCompact = FDB.'reflect.dom'
@@ -302,7 +304,6 @@ end
 %          end
 %       end
 %    in
-%       FdInf = {FDB.getLimits $ _}
 %       FdSup = {FDB.getLimits _}
 
 %       FdInt  = FdPutList
