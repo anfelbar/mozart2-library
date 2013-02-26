@@ -43,7 +43,13 @@ prepare
    FdConLevel = '#'(val: 'ICL_VAL'
 		    bnd: 'ICL_BND'
 		    dom: 'ICL_DOM')
-   
+
+   FdIntVarBranch = '#'(size_min: 'INT_VAR_SIZE_MIN'
+   		    	size_max: 'INT_VAR_SIZE_MAX')   
+
+   FdIntValBranch = '#'(val_min: 'INT_VAL_MIN'
+   		        val_max: 'INT_VAL_MAX')
+
 export
 %%% Finite domains
    inf:             FdInf
@@ -131,6 +137,7 @@ export
 %    assign:         FdAssign
 %    distribute:     FdDistribute
 %    choose:         FdChoose
+     distribute:     Fdpdistribute
 
 define
 
@@ -171,6 +178,17 @@ define
 
    %%% Generic propagators
    FdpDistinct = FDP.distinct
+
+   %%% Distributor
+   %Fdpdistribute = FDP.branch
+   local
+      Distributor = FDP.branch
+   in
+      proc {Fdpdistribute IV1 Evar Eval}
+	 {Distributor IV1 FdIntVarBranch.Evar FdIntValBranch.Eval}
+      end
+   end
+
    
 end
 
