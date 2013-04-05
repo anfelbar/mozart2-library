@@ -43,6 +43,8 @@ export
    Kill
    Choose
    Info
+   Inject
+
 define
 
    New        = Boot_Space.new
@@ -55,4 +57,5 @@ define
    Kill       = Boot_Space.kill
    Choose     = Boot_Space.choose
    Info       = Boot_Space.info
+   Inject     = Boot_Space.inject
 end
