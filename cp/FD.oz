@@ -102,6 +102,7 @@ export
 %    watch:          FdWatch
 
 %    %% Generic Propagators
+     linear: 	     FdpLinear
 %    sum:            FdpSum
 %    sumC:           FdpSumC
 %    sumCN:          FdpSumCN
@@ -266,6 +267,15 @@ define
    end
 
    %%% Generic propagators
+   local
+      LinearProp = FDP.linear
+   in
+      proc {FdpLinear VS1 VS2 RT VAL}
+	 {LinearProp VS1 VS2 FdRelType.RT VAL}
+      end
+   end
+   
+
    FdpDistinct = FDP.distinct
 
    %%% Distributor
