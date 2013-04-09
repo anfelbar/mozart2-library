@@ -138,7 +138,7 @@ export
 
 %%% Symbolic Propagators
    distinct:       FdpDistinct
-%    distinct2:      FdpDistinct2
+   distinct2:      FdpDistinct2
 %    distinctB:      FdpDistinctB
 %    distinctD:      FdpDistinctD
 %    distinctOffset: FdpDistinctOffset
@@ -302,6 +302,7 @@ define
    
 
    FdpDistinct = FDP.distinct
+   FdpDistinct2 = FDP.distinct2
 
    %%% Distributor
    %Fdpdistribute = FDP.branch
