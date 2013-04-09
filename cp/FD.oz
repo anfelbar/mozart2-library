@@ -51,11 +51,36 @@ prepare
 		    bnd: 'ICL_BND'
 		    dom: 'ICL_DOM')
 
-   FdIntVarBranch = '#'(size_min: 'INT_VAR_SIZE_MIN'
-   		    	size_max: 'INT_VAR_SIZE_MAX')   
+   FdIntVarBranch = '#'(none:            'INT_VAR_NONE'
+                        rnd:             'INT_VAR_RND'
+                        degree_min:      'INT_VAR_DEGREE_MIN'
+                        degree_max:      'INT_VAR_DEGREE_MAX'
+                        afc_min:         'INT_VAR_AFC_MIN'
+                        min_min:         'INT_VAR_MIN_MIN'
+                        min_max:         'INT_VAR_MIN_MAX'
+                        max_min:         'INT_VAR_MAX_MIN'
+                        max_max:         'INT_VAR_MAX_MAX'
+                        size_min:        'INT_VAR_SIZE_MIN'
+                        size_max:        'INT_VAR_SIZE_MAX'
+                        size_degree_min: 'INT_VAR_SIZE_DEGREE_MIN'
+                        size_degree_max: 'INT_VAR_SIZE_DEGREE_MAX'
+                        size_afc_min:    'INT_VAR_SIZE_AFC_MIN'
+                        size_afc_max:    'INT_VAR_SIZE_AFC_MAX'
+                        regret_min_min:  'INT_VAR_REGRET_MIN_MIN'
+                        regret_min_max:  'INT_VAR_REGRET_MIN_MAX'
+                        regret_max_min:  'INT_VAR_REGRET_MAX_MIN'
+                        regret_max_max:  'INT_VAR_REGRET_MAX_MAX')
 
-   FdIntValBranch = '#'(val_min: 'INT_VAL_MIN'
-			val_max: 'INT_VAL_MAX')
+   FdIntValBranch = '#'(val_min:         'INT_VAL_MIN'
+                        val_med:         'INT_VAL_MED'
+                        val_max:         'INT_VAL_MAX'
+                        val_rad:         'INT_VAL_RND'
+                        val_split_min:   'INT_VAL_SPLIT_MIN'
+                        val_split_max:   'INT_VAL_SPLIT_MAX'
+                        val_range_min:   'INT_VAL_RANGE_MIN'
+                        val_range_max:   'INT_VAL_RANGE_MAX'
+                        values_min:      'INT_VALUES_MIN'
+                        values_max:      'INT_VALUES_MAX')
 
 %% Old oz distribution strategies.   
 %    FddOptVarMap = map(naive:   0
