@@ -129,6 +129,7 @@ export
 %    %% Generic Propagators
    domain:         FdDomain
    linear: 	   FdpLinear
+   count:          Fdpcount
 %    sum:            FdpSum
 %    sumC:           FdpSumC
 %    sumCN:          FdpSumCN
@@ -301,6 +302,13 @@ define
       end
    end
    
+   local
+      CountProp = FDP.count
+   in
+      proc {Fdpcount V VAL1 RT VAL2}
+	 {CountProp V VAL1 FdRelType.RT VAL2}
+      end
+   end
 
    FdpDistinct = FDP.distinct
    FdpDistinct2 = FDP.distinct2
