@@ -39,25 +39,24 @@ require
 %    Space
 
 export
-  dfs:  SearchDFS
-  one:  SearchOne
-%    one:      OneModule
+  dfs:    SearchDFS
+  one:    OneModule
 %    all:      All
 %    allS:     AllS
 %    allP:     AllP
 %    best:     BestModule
 %    object:   SearchObject
-%    base:     SearchBase
+  base:   SearchBase
+  gecode: SearchGecode
 %    parallel: ParallelEngine
 
-% prepare
-
-%    %% General help routines
-%    proc {NewKiller ?Killer ?KillFlag}
-%       proc {Killer}
-%          KillFlag=kill
-%       end
-%    end
+prepare
+  %% General help routines
+  proc {NewKiller ?Killer ?KillFlag}
+    proc {Killer}
+      KillFlag=kill
+    end
+  end
 
 %    %%
 %    %% Different wrappers for creation of output
@@ -67,38 +66,28 @@ export
 %    end
 
 define
-   SearchDFS = Search.dfs
+  SearchDFS = Search.dfs
    
-   fun {SearchOne P}
-      S
-   in
-      {P _}
-      {Space.new P S}
-      {Space.ask S _}
-      {SearchDFS S}
-      [{Space.merge S}]
-   end
+  fun {WrapP S}
+    proc {$ X}
+      {Space.merge {Space.clone S} X}
+    end
+  end
 
-%    fun {WrapP S}
-%       proc {$ X}
-%          {Space.merge {Space.clone S} X}
-%       end
-%    end
-
-%    %%
-%    %% Make copy of space and recompute choices
-%    %%
-%    local
-%       proc {ReDo Is C}
-%          case Is of nil then skip
-%          [] I|Ir then {ReDo Ir C} {Space.commit1 C I}
-%          end
-%       end
-%    in
-%       proc {Recompute S Is C}
-%          C={Space.clone S} {ReDo Is C}
-%       end
-%    end
+  %%
+  %% Make copy of space and recompute choices
+  %%
+  local
+    proc {ReDo Is C}
+      case Is of nil then skip
+      [] I|Ir then {ReDo Ir C} {Space.commit C I-1}
+      end
+    end
+  in
+    proc {Recompute S Is C}
+      C={Space.clone S} {ReDo Is C}
+    end
+  end
 
 %    %%
 %    %% Injection of solution constraints for best solution search
@@ -109,25 +98,25 @@ define
 %       {Space.inject S proc {$ X} {O {Space.merge CS} X} end}
 %    end
 
-%    %%
-%    %% The one solution search module
-%    %%
+  %%
+  %% The one solution search module
+  %%
 
-%    fun {OneDepthNR KF S}
-%       if {IsFree KF} then
-%          case {Space.ask S}
-%          of failed then nil
-%          [] succeeded then S
-%          [] alternatives(N) then C={Space.clone S} in
-%             {Space.commit1 S 1}
-%             case {OneDepthNR KF S}
-%             of nil then {Space.commit2 C 2 N} {OneDepthNR KF C}
-%             elseof O then O
-%             end
-%          end
-%       else nil
-%       end
-%    end
+  fun {OneDepthNR KF S}
+    if {IsFree KF} then
+      case {Space.ask S}
+      of failed then nil
+      [] succeeded then S
+      [] alternatives(N) then C={Space.clone S} in
+        {Space.commit S 0}
+        case {OneDepthNR KF S}
+        of nil then {Space.commit C 1} {OneDepthNR KF C}
+        elseof O then O
+        end
+      end
+    else nil
+    end
+  end
 
 %    local
 %       fun {AltCopy KF I M S MRD}
@@ -170,56 +159,65 @@ define
 %       end
 %    end
 
-%    local
-%       fun {OneDepth P MRD ?KP}
-%          KF={NewKiller ?KP} S={Space.new P}
-%       in
-%          if MRD==1 then {OneDepthNR KF S}
-%          else {OneDepthR KF S S nil MRD MRD}
-%          end
-%       end
+  local
+    fun {OneDFSGecode P}
+      S
+    in
+      {P _}
+      S={Space.new P}
+      {Space.ask S _}
+      {Search.dfs S}
+    end
 
-%       local
-%          fun {AltCopy KF I M S CD MRD CO}
-%             if I==M then
-%                {Space.commit1 S I}
-%                {OneBoundR KF S S nil CD MRD MRD CO}
-%             else
-%                C={Space.clone S}
-%                {Space.commit1 C I}
-%                O={OneBoundR KF C S [I] CD 1 MRD CO}
-%             in
-%                if {Space.is O} then O
-%                else {AltCopy KF I+1 M S CD MRD O}
-%                end
-%             end
-%          end
+    fun {OneDepth P MRD ?KP}
+      KF={NewKiller ?KP} S={Space.new P}
+    in
+      if MRD==1 then {OneDepthNR KF S}
+      else nil %{OneDepthR KF S S nil MRD MRD}
+      end
+    end
 
-%          fun {Alt KF I M S C As CD RD MRD CO}
-%             {Space.commit1 S I}
-%             if I==M then {OneBoundR KF S C I|As CD RD MRD CO}
-%             else O={OneBoundR KF S C I|As CD RD MRD CO} in
-%                if {Space.is O} then O
-%                else S={Recompute C As} in
-%                   {Alt KF I+1 M S C As CD RD MRD O}
-%                end
-%             end
-%          end
+    local
+      fun {AltCopy KF I M S CD MRD CO}
+        if I==M then
+          {Space.commit S I-1}
+          {OneBoundR KF S S nil CD MRD MRD CO}
+        else
+          C={Space.clone S}
+          {Space.commit C I-1}
+          O={OneBoundR KF C S [I] CD 1 MRD CO}
+        in
+          if {Space.is O} then O
+          else {AltCopy KF I+1 M S CD MRD O}
+          end
+        end
+      end
 
-%          fun {OneBoundR KF S C As CD RD MRD CO}
-%             if {IsFree KF} then
-%                case {Space.ask S}
-%                of failed    then CO
-%                [] succeeded then S
-%                [] alternatives(M) then
-%                   if CD=<0 then cut
-%                   elseif RD==MRD then {AltCopy KF 1 M S CD-1 MRD CO}
-%                   else {Alt KF 1 M S C As CD-1 RD+1 MRD CO}
-%                   end
-%                end
-%             else nil
-%             end
-%          end
+      fun {Alt KF I M S C As CD RD MRD CO}
+        {Space.commit S I-1}
+        if I==M then {OneBoundR KF S C I|As CD RD MRD CO}
+        else O={OneBoundR KF S C I|As CD RD MRD CO} in
+          if {Space.is O} then O
+          else S={Recompute C As} in
+            {Alt KF I+1 M S C As CD RD MRD O}
+          end
+        end
+      end
+
+      fun {OneBoundR KF S C As CD RD MRD CO}
+        if {IsFree KF} then
+          case {Space.ask S}
+          of failed    then CO
+          [] succeeded then S
+          [] alternatives(M) then
+            if CD=<0 then cut
+            elseif RD==MRD then {AltCopy KF 1 M S CD-1 MRD CO}
+            else {Alt KF 1 M S C As CD-1 RD+1 MRD CO}
+            end
+          end
+        else nil
+        end
+      end
 
 %          fun {OneIterR KF S CD MRD}
 %             if {IsFree KF} then C={Space.clone S} in
@@ -230,18 +228,19 @@ define
 %             else nil
 %             end
 %          end
-%       in
+    in
 
-%          fun {OneBound P MD MRD ?KP}
-%             S={Space.new P}
-%          in
-%             {OneBoundR {NewKiller ?KP} S S nil MD MRD MRD nil}
-%          end
+      fun {OneBound P MD MRD ?KP}
+        S={Space.new P}
+      in
+        {OneBoundR {NewKiller ?KP} S S nil MD MRD MRD nil}
+      end
 
 %          fun {OneIter P MRD ?KP}
 %             {OneIterR {NewKiller ?KP} {Space.new P} 1 MRD}
 %          end
-%       end
+
+    end
 
 %       local
 %          proc {Probe S D KF}
@@ -274,48 +273,67 @@ define
 %          end
 %       end
 
-%    in
+  in
 
-%       OneModule = one(depth:    fun {$ P MRD ?KP}
-%                                    case {OneDepth P MRD ?KP}
-%                                    of nil then nil
-%                                    elseof S then [{Space.merge S}]
-%                                    end
-%                                 end
-%                       depthP:   fun {$ P MRD ?KP}
-%                                    case {OneDepth P MRD ?KP}
-%                                    of nil then nil
-%                                    elseof S then [{WrapP S}]
-%                                    end
-%                                 end
-%                       depthS:   fun {$ P MRD ?KP}
-%                                    case {OneDepth P MRD ?KP}
-%                                    of nil then nil
-%                                    elseof S then [S]
-%                                    end
-%                                 end
+    OneModule = one(dfsGecode:  fun {$ P}
+                                  case {OneDFSGecode P}
+                                  of nil then nil
+                                  elseof S then [{Space.merge S}]
+                                  end
+                                end
+                    dfsGecodeP: fun {$ P}
+                                  case {OneDFSGecode P}
+                                  of nil then nil
+                                  elseof S then [{WrapP S}]
+                                  end
+                                end
+                    dfsGecodeS: fun {$ P}
+                                  case {OneDFSGecode P}
+                                  of nil then nil
+                                  elseof S then [S]
+                                  end
+                                end
 
-%                       bound:    fun {$ P MD MRD ?KP}
-%                                    case {OneBound P MD MRD ?KP}
-%                                    of nil then nil
-%                                    [] cut then cut
-%                                    elseof S then [{Space.merge S}]
-%                                    end
-%                                 end
-%                       boundP:   fun {$ P MD MRD ?KP}
-%                                    case {OneBound P MD MRD ?KP}
-%                                    of nil then nil
-%                                    [] cut then cut
-%                                    elseof S then [{WrapP S}]
-%                                    end
-%                                 end
-%                       boundS:   fun {$ P MD MRD ?KP}
-%                                    case {OneBound P MD MRD ?KP}
-%                                    of nil then nil
-%                                    [] cut then cut
-%                                    elseof S then [S]
-%                                    end
-%                                 end
+                    depth:      fun {$ P MRD ?KP}
+                                  case {OneDepth P MRD ?KP}
+                                  of nil then nil
+                                  elseof S then [{Space.merge S}]
+                                  end
+                                end
+                    depthP:     fun {$ P MRD ?KP}
+                                  case {OneDepth P MRD ?KP}
+                                  of nil then nil
+                                  elseof S then [{WrapP S}]
+                                  end
+                                end
+                    depthS:     fun {$ P MRD ?KP}
+                                  case {OneDepth P MRD ?KP}
+                                  of nil then nil
+                                  elseof S then [S]
+                                  end
+                                end
+
+                    bound:      fun {$ P MD MRD ?KP}
+                                  case {OneBound P MD MRD ?KP}
+                                  of nil then nil
+                                  [] cut then cut
+                                  elseof S then [{Space.merge S}]
+                                  end
+                                end
+                    boundP:     fun {$ P MD MRD ?KP}
+                                  case {OneBound P MD MRD ?KP}
+                                  of nil then nil
+                                  [] cut then cut
+                                  elseof S then [{WrapP S}]
+                                  end
+                                end
+                    boundS:     fun {$ P MD MRD ?KP}
+                                  case {OneBound P MD MRD ?KP}
+                                  of nil then nil
+                                  [] cut then cut
+                                  elseof S then [S]
+                                  end
+                                end
 
 %                       iter:     fun {$ P MRD ?KP}
 %                                    case {OneIter P MRD ?KP}
@@ -354,9 +372,9 @@ define
 %                                    [] succeeded(S) then [S]
 %                                    end
 %                                 end
-%                      )
+                   )
 
-%    end
+  end
 
 %    %%
 %    %% The all solution search module
@@ -827,12 +845,16 @@ define
 %       end
 %    end
 
-%    %%
-%    %% Often used short cuts
-%    %%
-%    fun {SearchOne P}
-%       {OneModule.depth P 1 _}
-%    end
+  %%
+  %% Often used short cuts
+  %%
+  fun {SearchGOne P}
+    {OneModule.dfsGecode P}
+  end
+
+  fun {SearchOne P}
+    {OneModule.depth P 1 _}
+  end
 
 %    fun {SearchAll P}
 %       {All P 1 _}
@@ -842,9 +864,12 @@ define
 %       {BestModule.bab P O 1 _}
 %    end
 
-%    SearchBase = base(one:  SearchOne
-%                      all:  SearchAll
-%                      best: SearchBest)
+  SearchBase = base(one:  SearchOne
+%                   all:  SearchAll
+%                   best: SearchBest
+                   )
+
+  SearchGecode = gecode(one: SearchGOne)
 
 
 end
