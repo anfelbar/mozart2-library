@@ -47,9 +47,9 @@ prepare
 		   '>:':   'IRT_GR'
 		   '>=:':  'IRT_LQ')
    
-   FdConLevel = '#'(val: 'ICL_VAL'
-		    bnd: 'ICL_BND'
-		    dom: 'ICL_DOM')
+   % FdConLevel = '#'(val: 'ICL_VAL'
+   % 		    bnd: 'ICL_BND'
+   % 		    dom: 'ICL_DOM')
 
    FdIntVarBranch = '#'(none:            'INT_VAR_NONE'
                         rnd:             'INT_VAR_RND'
@@ -138,9 +138,20 @@ export
 %    sumD:           FdpDSum
 %    sumCD:          FdpDSumC
 
+%%% Arithmetic propagators
+    min:           Fdpmin
+    max:           Fdpmax
+    abs:           Fdpabs
+    mult:          Fdpmult
+    sqr:           Fdpsqr 
+    sqrt:          Fdpsqrt
+    divmod:        Fdpdivmod 
+    divI:	   FdpdivI
+    modI:	   FdpmodI
+
 %%% Symbolic Propagators
    distinct:       FdpDistinct
-   distinct2:      FdpDistinct2
+%    distinct2:      FdpDistinct2
 %    distinctB:      FdpDistinctB
 %    distinctD:      FdpDistinctD
 %    distinctOffset: FdpDistinctOffset
@@ -285,12 +296,112 @@ define
    %end
    
    %%% Simple relation over integer variables
-   local
-      RelProp = FDP.rel
+   
+   proc {FdRel Post} 
+     W = {Record.width Post} 
+     R = Post.2
    in
-      proc {FdRel IV1 RT IV2 ICL}
-	 {RelProp IV1 FdRelType.RT IV2 FdConLevel.ICL}
-      end
+   	case W
+   	of 2 then {FDP.rel2 Post.1 FdRelType.R}
+   	[] 3 then {FDP.rel3 Post.1 FdRelType.R Post.3}
+	[] 4 then {FDP.rel4 Post.1 FdRelType.R Post.3 Post.4}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+   %%% Arithmetic propagators
+
+   proc {Fdpmin Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 2 then {FDP.min2 Post.1 Post.2}
+   	[] 3 then {FDP.min3 Post.1 Post.2 Post.3}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+		
+   proc {Fdpmax Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 2 then {FDP.max2 Post.1 Post.2}
+   	[] 3 then {FDP.max3 Post.1 Post.2 Post.3}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+   proc {Fdpabs Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 2 then {FDP.abs Post.1 Post.2}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+   
+   proc {Fdpmult Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 3 then {FDP.mult Post.1 Post.2 Post.3}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+   proc {Fdpsqr Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 2 then {FDP.sqr Post.1 Post.2}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+   proc {Fdpsqrt Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 2 then {FDP.sqrt Post.1 Post.2}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+   proc {Fdpdivmod Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 4 then {FDP.divmod Post.1 Post.2 Post.3 Post.4}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end   
+
+   proc {FdpdivI Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 3 then {FDP.divI Post.1 Post.2 Post.3}
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+   proc {FdpmodI Post}
+     W = {Record.width Post}
+   in
+	case W
+   	of 3 then {FDP.modI Post.1 Post.2 Post.3}
+   	else
+   	   raise malFormed(post) end
+   	end
    end
 
    %%% Generic propagators
@@ -310,9 +421,30 @@ define
       end
    end
 
-   FdpDistinct = FDP.distinct
-   FdpDistinct2 = FDP.distinct2
-   FdDomain = FDP.dom
+   proc {FdpDistinct Post} 
+     W = {Record.width Post}
+   in
+   	case W
+   	of 1 then {FDP.distinct Post.1}
+   	[] 2 then {FDP.distinct2 Post.1 Post.2}	
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
+
+   proc {FdDomain Post}
+        W = {Record.width Post}
+   in
+   	case W
+   	of 2 then {FDP.dom2 Post.1 Post.2}
+   	[] 3 then {FDP.dom3 Post.1 Post.2 Post.3}
+	[] 4 then {FDP.dom3 Post.1 Post.2 Post.3 Post.4}	
+   	else
+   	   raise malFormed(post) end
+   	end
+   end
+
    %%% Distributor
    %Fdpdistribute = FDP.branch
    local
