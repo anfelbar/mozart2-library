@@ -310,6 +310,30 @@ define
    	end
    end
 
+   %% linear constraint for interger variable
+
+      proc{FdpLinear Post}
+   	W = {Record.width Post}
+      in
+
+	case W
+	of 3 then
+	   {FDP.linear3 Post.1 FdRelType.(Post.2) Post.3}
+	[] 4 then
+	   if{IsAtom Post.2} then
+	      {FDP.linear4 Post.1 FdRelType.(Post.2) Post.3 Post.4}
+	   elseif{IsAtom Post.3} then
+	      {FDP.linear4 Post.1 FdRelType.(Post.3) Post.2 Post.4}
+	   end
+	[] 5 then 
+	   {FDP.linear5 Post.1 FdRelType.(Post.3) Post.2 Post.4 Post.5}
+	else
+	    raise malFormed(post)
+	end
+     end
+   end
+
+
    %%% Arithmetic propagators
 
    proc {Fdpmin Post}
@@ -405,13 +429,6 @@ define
    end
 
    %%% Generic propagators
-   local
-      LinearProp = FDP.linear
-   in
-      proc {FdpLinear VS1 VS2 RT VAL}
-	 {LinearProp VS1 VS2 FdRelType.RT VAL}
-      end
-   end
    
    local
       CountProp = FDP.count
